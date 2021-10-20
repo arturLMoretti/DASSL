@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dassl_example",
+            "type": "shell",
+            "command": "gfortran",
+            "args": [
+                "-Wall",
+                "-o",
+                "slider.f",
+                "gauss.f",
+                "sl2.f",
+                "sl2a.f",
+                "sl2b.f",
+                "ddassl.f",
+                "daux.f",
+                "dlinpk.f"
+            ]
+        },
+        {
+            "label": "build",
+            "dependsOn": [
+                "make build dir",
+                "compile",
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true,
+            }
+        },
+        {
+            "label": "hello",
+            "type": "shell",
+            "command": "echo 'Hello VSCode'"
+        },
+        {
+            "label": "make build dir",
+            "type": "shell",
+            "command": "if [ ! -d \"./build\"]; then mkdir build; fi",
+        },
+        {
+            "label": "make",
+            "type": "shell",
+            "command":""
+        }
+    ]
+}
