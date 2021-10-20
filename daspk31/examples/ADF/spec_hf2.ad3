@@ -1,0 +1,20 @@
+Function
+  JM
+MaxColsM
+  1
+Independent
+  u
+  uprime
+  senpar
+Dependent
+  delta
+Top
+  res
+ScalarDerivatives
+  true
+ExceptionDefaultMode
+  Performance
+Cache
+  JM_Cache
+OutputDir
+  JM_Output

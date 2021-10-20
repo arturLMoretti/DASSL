@@ -1,0 +1,81 @@
+_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+_/                                                      _/
+_/   T angent linear and                                _/
+_/    A djoint                         Version 5.2.11   _/
+_/     M odel                                           _/
+_/      C ompiler                                       _/
+_/                                                      _/
+_/   Copyright (c) 1995-2000           Ralf Giering     _/
+_/                                                      _/
+_/   only for use at            DKRZ Hamburg, Germany   _/
+_/                                                      _/
+_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+
+reshilu.f:
+ parsing subroutine ** res **
+
+=========================================
+ semantic analysis
+=========================================
+checking subroutine ** res **
+ assumed size arrays not implemented :delta
+ assumed size arrays not implemented :ipar
+ assumed size arrays not implemented :rpar
+ assumed size arrays not implemented :senpar
+ assumed size arrays not implemented :u
+ assumed size arrays not implemented :uprime
+
+=========================================
+ normalization
+=========================================
+
+=========================================
+ control flow analysis
+=========================================
+
+=========================================
+ data dependence analysis
+=========================================
+
+=========================================
+ global data flow analysis
+=========================================
+ determine required routines and statements for subroutine : res
+ dependent variable(s) = 
+ delta
+
+ determine dependent routines and statements :
+ independent variable(s) = 
+ senpar
+
+ the independent variable(s) are :
+ senpar
+
+ the dependent variable(s) are   :
+ delta
+
+=========================================
+ generate adjoint common blocks
+=========================================
+
+=========================================
+ generate adjoint routines
+=========================================
+ begin generate adjoint computations of : res
+ end   generate adjoint computations of : res
+
+=========================================
+ generate auxiliary routines
+=========================================
+
+=========================================
+ Fortran dialect transformations
+=========================================
+
+=========================================
+ write modified and adjoint code
+=========================================
+reshilu_ad.f:
+ writing subroutine ** adpres **
+
+

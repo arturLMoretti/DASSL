@@ -1,0 +1,7 @@
+AD_TOP = res
+AD_IVARS = y, yprime, senpar
+AD_OVARS = delta
+AD_SCALAR_GRADIENTS = true
+AD_PREFIX = g
+AD_EXCEPTION_FLAVOR=performance
+AD_OUTPUT_DIR = res4sen

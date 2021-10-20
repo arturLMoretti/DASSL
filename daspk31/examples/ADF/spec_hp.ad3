@@ -1,0 +1,16 @@
+Function
+  JtM
+MaxColsM
+  1
+Independent
+  senpar
+Dependent
+  delta
+Top
+  res
+Tag
+  dp
+Cache
+  JtM_Cache
+OutputDir
+  JtM_Output

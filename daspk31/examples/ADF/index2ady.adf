@@ -1,0 +1,8 @@
+AD_TOP = res_ady
+AD_IVARS =t, y, addelta
+AD_OVARS = ady
+AD_PMAX = 1
+AD_PREFIX = g
+AD_SCALAR_GRADIENTS = true
+AD_EXCEPTION_FLAVOR=performance
+AD_OUTPUT_DIR = adj

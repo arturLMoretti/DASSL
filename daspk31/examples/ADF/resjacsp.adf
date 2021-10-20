@@ -1,0 +1,8 @@
+AD_PROG = res.cmp
+AD_TOP = res
+AD_IVARS = y, yprime
+AD_OVARS = delta
+AD_PREFIX = i
+AD_FLAVOR = sparse
+AD_EXCEPTION_FLAVOR=performance
+AD_OUTPUT_DIR = jacsp

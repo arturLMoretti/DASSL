@@ -1,0 +1,9 @@
+AD_TOP = res
+AD_IVARS = y, yprime
+AD_OVARS = delta
+AD_PMAX = 1600
+AD_PREFIX = j
+AD_FLAVOR = dense
+AD_SUPPRESS_LDG = true
+AD_EXCEPTION_FLAVOR=performance
+AD_OUTPUT_DIR = jac

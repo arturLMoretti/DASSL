@@ -1,0 +1,204 @@
+#
+# This makefile compiles and loads the DDASPK example program, calling the
+# Tapenade automatic differentiation engine to generate support
+# routines. It was originally written for an SGI machine, but has been updated 
+# to run on Windows wtih Cygwin installed (make, g77, and gcc are required). There is 
+# another Makefile for Linux.
+# If necessary, change the constants COMP and FFLAGS below for the
+# compiler to be used.
+
+.SUFFIXES: .F .f .o .c
+
+# Warning: f95 is not a viable altnernative to g77. At least for the brp
+# example, it will compile and run (on Linux), but it will produce garbage.
+COMP = g77
+CC   = gcc
+# The -Df2cFortran flag is necessary for Cygwin.
+CFLAGS = -g -O2 -Df2cFortran 
+FFLAGS = -g -O2
+
+JAVA = java
+SOLVR = ../../solver
+ADSLVR = ../../ad_solver
+PRECON = ../../preconds
+
+# PATH to tapenade.
+# If you are running on a Windows machine, make sure this is in dos format, 
+# because tapenade does not like spaces in directory names!
+# NOTE TO USER : You must set TAPDIR to be the name of the directory
+# that contains the root Tapenade directory. For example, if you 
+# install Tapenade2.1.1 in C:, then the root directory is
+# C:\Tapenade2.1.1. Since Unix-like code and Tapenade itself do
+# not like spaces in names, we recommend using the DOS versions. 
+# To get the DOS name of a directory, simply go to that directory 
+# (within a Cygwin shell) and type
+#          cygpath -d "`pwd`" 
+# Tapenade is also finicky about the file separator.  Be sure to use
+# "\" on Windows and "/" on linux. Also, absolute pathnames are required.
+TAPDIR = C:\TAPENA~1.1
+TAPJAR = $(TAPDIR)\jars\tapenade.jar
+TAPSTACK = $(TAPDIR)\ADFirstAidKit\adStack.c
+TAPBUFFER = $(TAPDIR)\ADFirstAidKit\adBuffer.f
+TAPADS = adStack.o adBuffer.o
+
+#----------------------------------------------------------------
+# DASPK without involving the ADIFOR and MPI packages, but including
+# calls to the Tapenade automatic differentiation tool.
+#
+OBJS = $(SOLVR)/ddaspk.o $(SOLVR)/daux.o $(SOLVR)/dlinpk.o \
+       $(SOLVR)/mpi_dummy.o $(SOLVR)/adf_dummy.o
+
+OBJSB = $(ADSLVR)/daspk_adjoint.o $(ADSLVR)/adwrite.o $(ADSLVR)/ad3setup_dummy.o
+
+SENSD = $(SOLVR)/dsensd.o
+
+HEAT = dheat.o $(OBJS) $(PRECON)/dbanpre.o $(SENSD)
+
+HEATB = dheat_ad.o resh.o $(OBJS) $(PRECON)/dbanpre.o $(OBJSB) resh_b.o resh_ofp_b.o $(TAPADS)
+
+HEATILU = dheatilu.o $(OBJS) $(SENSD) $(PRECON)/dilupre.o \
+          $(PRECON)/dsparsk.o 
+
+HEATILUB = dheatilu_ad.o reshilu.o $(OBJS)  $(PRECON)/dilupre.o $(PRECON)/ad_dilupre.o\
+          $(PRECON)/dsparsk.o $(OBJSB) reshilu_b.o reshilu_ofp_b.o $(TAPADS)
+
+WEB = dweb.o $(OBJS) $(PRECON)/drbdpre.o $(PRECON)/drbgpre.o $(SENSD) 
+
+WEBB = dweb_ad.o $(OBJS) $(PRECON)/drbdpre.o $(PRECON)/drbgpre.o $(OBJSB) \
+       resweb.o local_daxpy_b.o local_daxpy_ofp_b.o \
+       webr_ofp_b.o fweb_ofp_b.o resweb_b.o resweb_ofp_b.o resweb_ofyp_b.o fweb_b.o webr_b.o \
+       resweb_ady.f resweb_adp.f resweb_adyp.f $(TAPADS)
+       
+WEBILU = dwebilu.o $(OBJS) $(PRECON)/dilupre.o $(PRECON)/dsparsk.o 
+
+VDPB = vanDerPol_ad.o vdp_fcns.o $(OBJS) $(OBJSB) \
+       vdp_fcn_y1_d.o vdp_fcn_y2_d.o vdp_res_b.o vdp_fcn_b.o
+
+BRP = brp.o $(OBJS) $(SENSD)
+
+# -----------------------------default --------------------------------------
+#
+default : 
+	@echo "Usage: make OBJ "
+	@echo " "
+	@echo " where OBJ can be: "
+	@echo "   solution and sensitivity by forward method: "
+	@echo "         brp    --- Batch-reaction problems (index-1) "
+	@echo "         heat   --- Heat equation (index-0) by Direct method "
+	@echo "         heatilu -- Heat equation by Krylov method with ILU  "
+	@echo "                    preconditioner " 
+	@echo "         web    --- food web (index-1) problem by Direct method "
+	@echo "         webilu --- food web problem by Krylov method with ILU "
+	@echo "                    preconditioner "
+	@echo "                    by Direct method "
+	@echo " "
+	@echo "   sensitivity by adjoint method: "
+	@echo "         heatb  --- Heat equation by direct method "
+	@echo "         heatilub - Heat equation by Krylov method with ILU  "
+	@echo "                    preconditioner " 
+	@echo "         webb   --- food web problem by direct method "
+	@echo " "
+	@echo "   adjoint method (to retrieve the adjoint variable) : "
+	@echo "         vdpb   --- van der Pol oscillator "
+#
+# test with sensitivity to the derived information
+
+brp :	$(BRP)
+	$(COMP) $(FFLAGS) -o brp $(BRP)
+heat:	$(HEAT)
+	$(COMP) $(FFLAGS) -o heat $(HEAT)
+heatb:	$(HEATB) resh_b.f resh_ofp_b.f
+	$(COMP) $(FFLAGS) -o heatb $(HEATB)
+resh_b.f : resh.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESH -vars "U" -outvars "DELTA" resh.f
+resh_ofp_b.f : resh.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESH_OFP -vars "SENPAR" -outvars "DELTA" resh.f
+heatilu: $(HEATILU) 
+	$(COMP) $(FFLAGS) -o heatilu $(HEATILU) 
+heatilub: $(HEATILUB) reshilu_b.f reshilu_ofp_b.f
+	$(COMP) $(FFLAGS) -o heatilub $(HEATILUB) 
+reshilu_b.f : reshilu.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESHILU -vars "U" -outvars "DELTA" reshilu.f
+reshilu_ofp_b.f : reshilu.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESHILU_OFP -vars "SENPAR" -outvars "DELTA" reshilu.f
+
+web :  $(WEB) 
+	$(COMP) $(FFLAGS) -o web $(WEB)
+	
+# There are 3 copies of the RES in reweb.f, RESWEB, RESWEB_OFP, RESWEB_OFYP.
+webb : resweb_b.f fweb_b.f webr_b.f resweb_ofp_b.f resweb_ofyp_b.f $(WEBB) 
+	$(COMP) $(FFLAGS) -o webb $(WEBB)
+resweb_b.f : resweb.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESWEB -vars "U" -outvars "DELTA" resweb.f
+fweb_b.f : 
+webr_b.f : 
+local_daxpy_b.f :
+resweb_ofp_b.f : resweb.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESWEB_OFP -vars "SENPARA" -outvars "DELTA" resweb.f
+webr_ofp_b.f :
+fweb_ofp_b.f :	
+local_daxpy_ofp_b.f :
+resweb_ofyp_b.f : resweb.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head RESWEB_OFYP -vars "UPRIME" -outvars "DELTA" resweb.f
+webr_ofyp_b.f :
+fweb_ofyp_b.f :
+local_daxpy_ofyp_b.f:
+
+webilu :  $(WEBILU) 
+	$(COMP) $(FFLAGS) -o webilu $(WEBILU)
+
+vdpb :  $(VDPB) 
+	$(COMP) $(FFLAGS) -o vdpb $(VDPB)
+vdp_fcn_y1_d.f : vdp_fcns.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -forward \
+	-head VDP_FCN_Y1 -vars "YDEP" -outvars "RESULT" vdp_fcns.f
+vdp_fcn_y2_d.f : vdp_fcns.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -forward \
+	-head VDP_FCN_Y2 -vars "YDEP" -outvars "RESULT" vdp_fcns.f
+vdp_res_b.f : vdp_fcns.f
+	$(JAVA) -mx256m -classpath "$(TAPJAR)" -Dali.tapenade_home="$(TAPDIR)" \
+	-Dali.browser="dummy" topLevel.Differentiator -backward \
+	-head VDP_RES -vars "Y" -outvars "DELTA" vdp_fcns.f
+vdp_fcn_b.f : 
+	       
+	
+# Tapenade support code
+adStack.o : $(TAPSTACK)
+	$(CC) $(CFLAGS) -c $(TAPSTACK) -o adStack.o
+adBuffer.o : $(TAPBUFFER)
+	$(COMP) $(FFLAGS) -c $(TAPBUFFER) -o adBuffer.o
+
+clean : 
+	-rm -rf core core.* *~ *.stackdump *.msg
+
+cleaner :
+	make clean
+	-rm -rf $(SOLVR)/*.o $(ADSLVR)/*.o $(PRECON)/*.o
+	-rm -rf *.o heat.exe heatilu.exe web.exe webilu.exe heatb.exe heatilub.exe webb.exe brp.exe vdpb.exe
+	
+new :
+	make cleaner
+	-rm -f *_b.f *_d.f
+	-rm -rf fort.*
+
+
+# Rule for compiling a Fortran source file:
+.f.o: ;	$(COMP) $(FFLAGS) -c $*.f -o $*.o
+.c.o:
+	$(CC) $(CFLAGS) -c $*.c -o $*.o

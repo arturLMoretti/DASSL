@@ -1,0 +1,1 @@
+tamc  -module res -pure -input senpar -output delta -admark adp -reverse reshilu.f 
